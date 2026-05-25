@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR распознавание текста</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .upload-area {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+        }
+
+        .upload-area.drag-over {
+            background: #f0f0ff;
+            border: 2px dashed #667eea;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .upload-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-container {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .image-section {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .image-section h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .image-canvas {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .transcriptions-section {
+            padding: 20px;
+        }
+
+        .transcriptions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .transcriptions-list {
+            list-style: none;
+        }
+
+        .transcription-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+
+        .transcription-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .transcription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .transcription-text {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .transcription-text:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .confidence {
+            font-size: 0.85rem;
+            color: #28a745;
+        }
+
+        .save-btn {
+            background: #28a745;
+            margin-top: 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: normal;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 OCR Распознавание текста</h1>
+            <p>YOLOv11 + TrOCR для распознавания рукописного текста</p>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📸</div>
+            <div class="upload-text">
+                <strong>Нажмите или перетащите изображение</strong><br>
+                Поддерживаются форматы: JPG, PNG, JPEG
+            </div>
+            <input type="file" id="fileInput" class="upload-input" accept="image/*">
+            <button class="btn" onclick="document.getElementById('fileInput').click()">Выбрать файл</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px;">Обработка изображения... Это может занять несколько секунд</p>
+        </div>
+
+        <div class="results-container" id="resultsContainer">
+            <div class="image-section">
+                <h2>🖼️ Изображение с разметкой</h2>
+                <div style="position: relative; display: inline-block;">
+                    <canvas id="imageCanvas" class="image-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="transcriptions-section">
+                <div class="transcriptions-header">
+                    <h2>📋 Распознанный текст</h2>
+                    <button class="btn save-btn" id="saveBtn" onclick="saveTranscriptions()">💾 Сохранить в файл</button>
+                </div>
+                <div id="transcriptionsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let currentImage = null;
+        let currentDetections = [];
+        let currentFilename = null;
+        let canvas = null;
+        let ctx = null;
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const imageCanvas = document.getElementById('imageCanvas');
+        canvas = imageCanvas;
+        ctx = canvas.getContext('2d');
+
+        // Drag & drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        async function handleFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            loading.style.display = 'block';
+            resultsContainer.style.display = 'none';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                currentFilename = data.filename;
+                currentDetections = data.detections;
+
+                // Загружаем изображение
+                const img = new Image();
+                img.onload = () => {
+                    drawImageWithBoxes(img, data.detections);
+                    displayTranscriptions(data.detections);
+                    resultsContainer.style.display = 'block';
+                    loading.style.display = 'none';
+                };
+                img.src = data.url;
+                currentImage = img;
+
+                showToast('✅ Изображение успешно обработано!', 'success');
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showToast('❌ Ошибка при обработке изображения', 'error');
+                loading.style.display = 'none';
+            }
+        }
+
+        function drawImageWithBoxes(img, detections) {
+            // Устанавливаем размер canvas
+            const maxWidth = 800;
+            const scale = Math.min(maxWidth / img.width, 1);
+            const width = img.width * scale;
+            const height = img.height * scale;
+
+            canvas.width = width;
+            canvas.height = height;
+
+            // Рисуем изображение
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Рисуем bounding boxes
+            detections.forEach(detection => {
+                const [x, y, w, h] = detection.bbox;
+                const scaledX = (x - w/2) * scale;
+                const scaledY = (y - h/2) * scale;
+                const scaledW = w * scale;
+                const scaledH = h * scale;
+
+                // Рисуем прямоугольник
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(scaledX, scaledY, scaledW, scaledH);
+
+                // Рисуем номер
+                const index = detections.indexOf(detection) + 1;
+                ctx.fillStyle = '#667eea';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(`#${index}`, scaledX + 5, scaledY + 20);
+            });
+        }
+
+        function displayTranscriptions(detections) {
+            const container = document.getElementById('transcriptionsList');
+            container.innerHTML = '';
+
+            detections.forEach((detection, index) => {
+                const item = document.createElement('div');
+                item.className = 'transcription-item';
+                item.id = `transcription-${index}`;
+
+                const confidencePercent = detection.confidence ? (detection.confidence * 100).toFixed(1) : 'N/A';
+
+                item.innerHTML = `
+                    <div class="transcription-header">
+                        <span>📦 Блок #${index + 1}</span>
+                        <span class="confidence">Уверенность: ${confidencePercent}%</span>
+                    </div>
+                    <textarea
+                        class="transcription-text"
+                        id="text-${index}"
+                        data-original="${escapeHtml(detection.text)}"
+                        rows="3"
+                    >${escapeHtml(detection.text)}</textarea>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function saveTranscriptions() {
+            const transcriptions = [];
+
+            currentDetections.forEach((detection, index) => {
+                const textarea = document.getElementById(`text-${index}`);
+                const currentText = textarea.value;
+                const originalText = textarea.dataset.original;
+
+                transcriptions.push({
+                    bbox: detection.bbox,
+                    text: currentText,
+                    original: originalText,
+                    confidence: detection.confidence,
+                    edited: currentText !== originalText
+                });
+            });
+
+            const data = {
+                filename: currentFilename,
+                image_name: currentFilename,
+                transcriptions: transcriptions
+            };
+
+            try {
+                const response = await fetch('/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast(`✅ Транскрипции сохранены в файл: ${result.file}`, 'success');
+
+                    // Предлагаем скачать файл
+                    setTimeout(() => {
+                        window.open(`/download/${result.file}`, '_blank');
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('Ошибка сохранения:', error);
+                showToast('❌ Ошибка при сохранении', 'error');
+            }
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            toast.style.backgroundColor = type === 'success' ? '#28a745' : '#dc3545';
+
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Для отладки - показываем что приложение загружено
+        console.log('Приложение загружено');
+    </script>
+</body>
+</html>
