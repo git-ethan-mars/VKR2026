@@ -1,9 +1,6 @@
 # 📝 Детекция рукописного текста 20-х годов прошлого века
-
 ***
-
 ## 📂 Структура проекта
-
 | Файл / Папка | Описание |
 | :--- | :--- |
 | 📁 `/detection_dataset` | Набор данных для обучения детекторов нахождению слов на изображении ||
@@ -16,11 +13,8 @@
 *   **OS:** Windows
 *   **Python:** 3.11.4
 ## Использование
-
-
-
+*   `python app.py`
 ## Используемые датасеты
-
 Для обучения модели детекции использовались, следующие наборы данных:
 ### 1. AI Forever School Notebooks (HuggingFace)
 *   **Ссылка:** [HuggingFace Dataset](https://huggingface.co/datasets/ai-forever/school_notebooks_RU)
@@ -29,7 +23,6 @@
     *   Тренировочная выборка: **1557** изображений
     *   Валидационная выборка: **150** изображений
 *   **Особенности:** Содержит разметку как для детекции (bbox), так и для сегментации (polygons)
-
 ### 2. Russian Handwritten Text (Roboflow)
 *   **Ссылка:** [Detection Dataset](https://github.com/git-ethan-mars/VKR2026/tree/main/detection_dataset)
 *   **Размер:** 0.1 Gb
