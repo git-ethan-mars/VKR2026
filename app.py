@@ -57,13 +57,13 @@ async def upload_image(file: UploadFile = File(...)):
     raw_detections = yolo_detector.detect(file_path)
     print(f"   Найдено блоков до фильтрации: {len(raw_detections)}")
 
-    # ШАГ 2: Предобработка bounding boxes (удаление вложенных)
-    detections = remove_nested_bboxes(raw_detections)
-    print(f"   После удаления вложенных блоков: {len(detections)}")
-
-    # ШАГ 3: Объединение близких блоков в строки
-    detections = merge_nearby_bboxes(detections)
+    # ШАГ 2: Объединение близких блоков в строки
+    detections = merge_nearby_bboxes(raw_detections)
     print(f"   После объединения в строки: {len(detections)}")
+
+    # ШАГ 3: Предобработка bounding boxes (удаление вложенных)
+    detections = remove_nested_bboxes(detections)
+    print(f"   После удаления вложенных блоков: {len(detections)}")
 
     # Загружаем изображение
     img = cv2.imread(file_path)
